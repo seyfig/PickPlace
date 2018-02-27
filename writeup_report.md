@@ -46,15 +46,15 @@ The image from the demo is given below.
 The table below shows the relative locations of joint (i-1) to joint (i) from the URDF file.
 
 
-Joint Symbol  |    Joint Name | Parent Link |   Child Link | x(m)  | y(m) | z(m)
-          --- |           --- |         --- |          --- |  ---  |  --- | ---
-J<sub>1</sub> |       joint_1 |   base_link |       link_1 | 0     |    0 | 0.33
-J<sub>2</sub> |       joint_2 |      link_1 |       link_2 | 0.35  |    0 | 0.42
-J<sub>3</sub> |       joint_3 |      link_2 |       link_3 | 0     |    0 | 1.25
-J<sub>4</sub> |       joint_4 |      link_3 |       link_4 | 0.96  |    0 | -0.054
-J<sub>5</sub> |       joint_5 |      link_4 |       link_5 | 0.54  |    0 | 0
-J<sub>6</sub> |       joint_6 |      link_5 |       link_6 | 0.193 |    0 | 0
-J<sub>G</sub> | gripper-joint |      link_6 | gripper_link | 0.11  |    0 | 0
+|Joint Symbol  |    Joint Name | Parent Link |   Child Link | x(m)  | y(m) | z(m)   |
+|:------------:|:-------------:|:-----------:|:------------:|:-----:|:----:|:------:|
+|J<sub>1</sub> |       joint_1 |   base_link |       link_1 | 0     |    0 | 0.33   |
+|J<sub>2</sub> |       joint_2 |      link_1 |       link_2 | 0.35  |    0 | 0.42   |
+|J<sub>3</sub> |       joint_3 |      link_2 |       link_3 | 0     |    0 | 1.25   |
+|J<sub>4</sub> |       joint_4 |      link_3 |       link_4 | 0.96  |    0 | -0.054 |
+|J<sub>5</sub> |       joint_5 |      link_4 |       link_5 | 0.54  |    0 | 0      |
+|J<sub>6</sub> |       joint_6 |      link_5 |       link_6 | 0.193 |    0 | 0      |
+|J<sub>G</sub> | gripper-joint |      link_6 | gripper_link | 0.11  |    0 | 0      |
 
 
 The illustrations of the reference frames are given in the following images.
@@ -144,13 +144,15 @@ q4 is the joint angle variable.
 
 ```
 Z_4 || Z_5, when measured about X_4, Z_5 is rotated counter-clockwise, therefore alpha3 = 90.
-Since O_4 and O_5 are coincident, a4 and d5 are equal to 0. Z_4 and Z_5 intersects, and X_4 and X_5 are coincident.
+Since O_4 and O_5 are coincident, a4 and d5 are equal to 0.
+Z_4 and Z_5 intersects, and X_4 and X_5 are coincident.
 q5 is the joint angle variable.
 ```
 
 ```
 Z_5 || Z_6, when measured about X_5, Z_6 is rotated clockwise, therefore alpha3 = -90.
-Since O_5 and O_6 are coincident, a5 and d6 are equal to 0. Z_5 and Z_6 intersects, and X_5 and X_6 are coincident.
+Since O_5 and O_6 are coincident, a5 and d6 are equal to 0.
+Z_5 and Z_6 intersects, and X_5 and X_6 are coincident.
 q6 is the joint angle variable.
 ```
 
@@ -375,11 +377,11 @@ Combining R0_6 and 0<sub>r<sub>EE/0</sub></sub> as mentioned in the beginning of
 
 
 T0_EE:
-|sin(p)⋅cos(r)⋅cos(y) + sin(r)⋅sin(y) | -sin(p)⋅sin(r)⋅cos(y) + sin(y)⋅cos(r) | cos(p)⋅cos(y) | px|
-|:-----------------------------------:|:-------------------------------------:|:-------------:|:-:|
-|sin(p)⋅sin(y)⋅cos(r) - sin(r)⋅cos(y) | -sin(p)⋅sin(r)⋅sin(y) - cos(r)⋅cos(y) | sin(y)⋅cos(p) | py|
-|           cos(p)⋅cos(r)             |            -sin(r)⋅cos(p)             |    -sin(p)    | pz|
-|                 0                   |                   0                   |       0       | 1 |
+|sin(p)⋅cos(r)⋅cos(y) + sin(r)⋅sin(y) | -sin(p)⋅sin(r)⋅cos(y) + sin(y)⋅cos(r) | cos(p)⋅cos(y) |  px |
+|:-----------------------------------:|:-------------------------------------:|:-------------:|:---:|
+|sin(p)⋅sin(y)⋅cos(r) - sin(r)⋅cos(y) | -sin(p)⋅sin(r)⋅sin(y) - cos(r)⋅cos(y) | sin(y)⋅cos(p) |  py |
+|           cos(p)⋅cos(r)             |            -sin(r)⋅cos(p)             |    -sin(p)    |  pz |
+|                 0                   |                   0                   |       0       |   1 |
 
 
 
@@ -491,10 +493,10 @@ q₆ = atan2(-(-sin(q₅)⋅sin(q₆)), sin(q₅)⋅cos(q₆))
 #### 1. Fill in the `IK_server.py` file with properly commented python code for calculating Inverse Kinematics based on previously performed Kinematic Analysis. Your code must guide the robot to successfully complete 8/10 pick and place cycles. Briefly discuss the code you implemented and your results.
 
 ##### 1. Additional Functions
-** homogeneous_transform function **
+**homogeneous_transform function**
 It returns the homogeneous_transform matrix for given alpha_n_1, a_n_1, q_n and d_n. This function was used to obtain 7 matrices for each link.
 
-** sqsum function **
+**sqsum function**
 It returns to sum of squares of the given two parameters.
 
 ##### 2. Transformer Class
@@ -546,4 +548,4 @@ The fourth screenshot shows the 11th cylinder is succesfully placed in to the bi
 #### 3. Results
 
 
-The code can complete 8/10, further, it increased by on with 9/11. However, it is not consistent. It cannot always place eight cylinders out of ten. Mostly, the arm fails to grasp the cylinders. The algorithm is slow since it takes more than one minute to place a cylinder. If the error is calculated, then the process time increases significantly.
+The code can complete 8/10, further, it increased by one successful cylinders to be nine out of eleven. However, it is not consistent. It cannot always place eight cylinders out of ten. Mostly, the arm fails to grasp the cylinders. The algorithm is slow since it takes more than one minute to place a cylinder. If the error is calculated, then the process time increases significantly.
