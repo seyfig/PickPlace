@@ -82,6 +82,7 @@ def test_code(test_case):
          alpha5: -pi/2, a5:      0, d6:     0,
          alpha6:     0, a6:      0, d7: 0.303, q7:       0
     }
+
     #
     #
     # Define Modified DH Transformation matrix
@@ -116,22 +117,14 @@ def test_code(test_case):
     T6_G = homogeneous_transform(alpha6, a6, q7, d7).subs(s)
 
     # Composition of Homogeneous Transforms
-    """
-    T0_2 = simplify(T0_1 * T1_2)
-    T0_3 = simplify(T0_2 * T2_3)
-    T0_4 = simplify(T0_3 * T3_4)
-    T0_5 = simplify(T0_4 * T4_5)
-    T0_6 = simplify(T0_5 * T5_6)
-    T0_G = simplify(T0_6 * T6_G)
-    """
     T0_G = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_G
 
     # Extract end-effector position and orientation from request
     # px,py,pz = end-effector position
     # roll, pitch, yaw = end-effector orientation
-    px = req.poses[x].position.x
-    py = req.poses[x].position.y
-    pz = req.poses[x].position.z
+    eex = req.poses[x].position.x
+    eey = req.poses[x].position.y
+    eez = req.poses[x].position.z
 
     (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
         [req.poses[x].orientation.x, req.poses[x].orientation.y,
@@ -141,6 +134,7 @@ def test_code(test_case):
     # Correction Needed to Account of Orientation Difference Between Definition of
         # Gripper_Link in URDF versus DH Convention
     r, p, y = symbols('r p y')
+    px, py, pz = symbols('px py pz')
 
     # roll
     Rot_x = Matrix([[      1,       0,       0],
@@ -157,14 +151,21 @@ def test_code(test_case):
                     [ sin(y),  cos(y),       0],
                     [      0,       0,       1]])
 
+
+
     Rot_EE = simplify(Rot_z * Rot_y * Rot_x)
 
     Rot_Error = Rot_z.subs(y, pi) * Rot_y.subs(p, -pi/2)
 
     Rot_EE = Rot_EE * Rot_Error
-    Rot_EE = Rot_EE.subs({'r': roll, 'p': pitch, 'y':yaw})
 
     EE = Matrix([[px],[py],[pz]])
+
+    Rot_EE = Rot_EE.subs({'r': roll, 'p': pitch, 'y':yaw})
+
+    EE = EE.subs({'px':eex, 'py':eey, 'pz':eez})
+
+
 
     # Calculate the wrist center
     # O_r_WC_0 = O_r_EE_0 - d * R_0_6 * [0,0,1] = [px,py,pz] - d * R_0_6 * [0, 0, 1]
@@ -176,11 +177,26 @@ def test_code(test_case):
     theta1 = atan2(WC[1], WC[0])
 
     # Triangle
+    WCxy = sqrt(sqsum(WC[0], WC[1]))
+    WCz = WC[2]
+
+    #side_a = 1.501
+    side_a = sqrt(sqsum(s[a3], s[d4]))
+    #side_a = 1.500971685275908
+    #side_a = sqrt(sqsum(WCxy - 1.6, WCz - 0.75))
+    side_b = sqrt(sqsum((WCxy - 0.35), (WCz - 0.75)))
+    side_c = 1.25
+    sag_angle = atan2(0.054,sqrt(side_a**2 - 0.054**2))
+    """
     side_a = 1.501
     WCxy = sqrt(sqsum(WC[0], WC[1])) - 0.35
     WCz = WC[2] - 0.75
     side_b = sqrt(sqsum(WCxy, WCz))
     side_c = 1.25
+    """
+
+    print("A:", side_a, "   B:", side_b, "  C:", side_c, "  WCxy:", WCxy, " WCz:", WCz)
+
 
     side_a2 = pow(side_a, 2)
     side_b2 = pow(side_b, 2)
@@ -190,8 +206,9 @@ def test_code(test_case):
     angle_b = acos((side_a2 + side_c2 - side_b2) / (2 * side_a * side_c))
     angle_c = acos((side_a2 + side_b2 - side_c2) / (2 * side_a * side_b))
 
-    theta2 = pi/2 - angle_a - atan2(WCz, WCxy)
-    theta3 = pi/2 - (angle_b + 0.036)  # sag in link4 of -0.054m
+    theta2 = pi/2 - angle_a - atan2(WCz - 0.75, WCxy - 0.35)
+    theta3 = pi/2 - (angle_b + sag_angle)  # sag in link4 of -0.054m
+    #theta3 = pi/2 - (angle_b + 0.036)  # sag in link4 of -0.054m
 
     R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3]
     R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta2, q3:theta3})

@@ -106,6 +106,19 @@ class Transformer:
         self.Rot_EE = Rot_EE * Rot_Error
         self.R0_3 = T0_1[0:3,0:3] * T1_2[0:3,0:3] * T2_3[0:3,0:3]
 
+        # To assign with more precision
+        self.side_a = sqrt(sqsum(dh[a3], dh[d4]))
+        self.side_c = dh[a2]
+        self.sag_angle = atan2(dh[a3],sqrt(self.side_a2 - pow(dh[a3],2)))
+
+        # To assign close enough
+        #self.side_a = 1.501
+        #self.side_c = 1.25
+        #self.sag_angle = 0.036
+
+        self.side_a2 = pow(self.side_a,2)
+        self.side_c2 = pow(self.side_c,2)
+
 
 def handle_calculate_IK(req):
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
@@ -154,31 +167,35 @@ def handle_calculate_IK(req):
             theta1 = atan2(WC[1], WC[0])
 
             # Triangle
-            side_a = 1.501
-            WCxy = sqrt(sqsum(WC[0], WC[1])) - 0.35
-            WCz = WC[2] - 0.75
-            side_b = sqrt(sqsum(WCxy, WCz))
-            side_c = 1.25
+            side_a = transformer.side_a
+            WCxy = sqrt(sqsum(WC[0], WC[1]))
+            WCz = WC[2]
+            side_b = sqrt(sqsum((WCxy - 0.35), (WCz - 0.75)))
+            side_c = transformer.side_c
 
-            side_a2 = pow(side_a, 2)
+            side_a2 = transformer.side_a2
             side_b2 = pow(side_b, 2)
-            side_c2 = pow(side_c, 2)
+            side_c2 = transformer.side_c2
 
             angle_a = acos((side_b2 + side_c2 - side_a2) / (2 * side_b * side_c))
             angle_b = acos((side_a2 + side_c2 - side_b2) / (2 * side_a * side_c))
             angle_c = acos((side_a2 + side_b2 - side_c2) / (2 * side_a * side_b))
 
-            theta2 = pi/2 - angle_a - atan2(WCz, WCxy)
-            theta3 = pi/2 - (angle_b + 0.036)  # sag in link4 of -0.054m
+            theta2 = pi/2 - angle_a - atan2(WCz - 0.75, WCxy - 0.35)
+            theta3 = pi/2 - (angle_b + transformer.sag_angle)  # sag in link4 of -0.054m
 
             R0_3 = transformer.R0_3.evalf(subs={transformer.q1: theta1, transformer.q2: theta2, transformer.q3:theta3})
 
             R3_6 = R0_3.inv("LU") * Rot_EE
 
             # Euler angles from the rotation matrix
-            theta4 = atan2(R3_6[2,2], -R3_6[0,2])
             theta5 = atan2(sqrt(sqsum(R3_6[0,2], R3_6[2,2])), R3_6[1,2])
-            theta6 = atan2(-R3_6[1,1], R3_6[1,0])
+            if sin(theta5) < 0:
+                theta4 = atan2(-R3_6[2,2], R3_6[0,2])
+                theta6 = atan2(R3_6[1,1], -R3_6[1,0])
+            else:
+                theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+                theta6 = atan2(-R3_6[1,1], R3_6[1,0])
             #
             ###
 
